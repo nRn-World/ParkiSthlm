@@ -3173,6 +3173,8 @@ function App() {
       map?.setPaintProperty("route-line", "line-dasharray", fallback ? [2, 2.2] : [1, 0]);
       const willTrack = tracking && !fallback;
       if (willTrack) {
+        // Visa bilen direkt vid startpunkten; annars syns den först när GPS-spårningen ger en ny punkt.
+        updateUserLocation(positions[0], 20, true);
         // Körläge: starta på din sparade höjd i stället för att zooma ut till hela rutten.
         // Omdirigeringar under körning rör inte zoomen alls.
         const isReroute = routeInfoRef.current?.tracking === true;
@@ -3225,7 +3227,7 @@ function App() {
     } finally {
       setRouteLoading(false);
     }
-  }, [online, showNotice]);
+  }, [online, showNotice, updateUserLocation]);
 
   const clearRoute = () => {
     const map = mapRef.current;
