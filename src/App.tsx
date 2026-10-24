@@ -154,11 +154,13 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
-// Publika Overpass-instanser. Den kanoniska instansen först och en spegling som reserv.
+// Publika Overpass-instanser med hela världen. overpass-api.de hänger ofta, så den snabba
+// franska speglingen går först. (overpass.osm.ch täcker bara Schweiz och ger tomt för Sverige.)
 // Varje försök har en tidsgräns så att en långsam instans inte kan låsa gränssnittet.
 const OVERPASS_ENDPOINTS = [
+  "https://overpass.openstreetmap.fr/api/interpreter",
   "https://overpass-api.de/api/interpreter",
-  "https://overpass.osm.ch/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter",
 ];
 const OVERPASS_TIMEOUT_MS = 15_000;
 const MAX_AREA_RADIUS_KM = 5;
