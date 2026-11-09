@@ -12,9 +12,20 @@
 
 ## 📌 Vad är appen?
 
-**Parkera i Stockholm** är en modern, interaktiv och mobilanpassad webbapplikation som hjälper dig att snabbt hitta parkering och se gällande taxor i Stockholms stad – direkt i webbläsaren utan att ladda ner någon app.
+**Parkera i Stockholm** är en gratis app som svarar på tre enkla frågor när du står med bilen i Stockholm:
 
-Appen visar Stockholms stads officiella fem taxeområden (Taxa 1–5) med korrekta priser och tider enligt Trafikkontorets taxebestämmelser. Den hämtar även realtidsdata om parkeringsplatser via OpenStreetMap.
+1. **Var kan jag parkera?** – kartan visar parkeringar och zoner runt dig.
+2. **Vad kostar det?** – tryck på kartan och se taxan (Taxa 1–5) och priset *just nu*.
+3. **Hur kommer jag dit?** – appen visar vägen och hjälper dig komma ihåg var bilen står.
+
+Den fungerar som Android-app (Google Play) och i webbläsaren, och kartan går att ladda ner för användning offline. Priser och tider följer Stockholms stads officiella taxor, och parkeringsplatser hämtas från OpenStreetMap.
+
+<p align="center">
+  <img src="docs/screenshots/karta.jpg" width="23%" alt="Taxekarta över Stockholm" />
+  <img src="docs/screenshots/lista.jpg" width="23%" alt="Lista med parkeringar i närheten" />
+  <img src="docs/screenshots/parkeringsplats.jpg" width="23%" alt="Detaljer för en parkeringsplats" />
+  <img src="docs/screenshots/elbilsladdning.jpg" width="23%" alt="Laddplatser för elbil" />
+</p>
 
 > ⚠️ **Vägmärken och skyltning på plats gäller alltid.** Kontrollera alltid skylten på gatan innan du parkerar. Appen är ett hjälpmedel – inte ett rättsligt bindande dokument.
 
