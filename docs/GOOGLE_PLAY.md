@@ -111,7 +111,7 @@ datorn efteråt.
 2. **Skapa app:** namn `ParkiSthlm`, standardspråk svenska, app (inte spel), gratis.
 3. **Appinnehåll** – alla formulär måste fyllas i innan publicering:
    - *Åtkomst till appen:* inga inloggningar eller begränsade ytor. Inga testuppgifter behövs.
-   - *Annonser:* nej.
+   - *Annonser:* **ja** (Google AdMob). Datasäkerhet: deklarera Enhets- eller andra ID:n (annons-ID) och appinteraktioner som insamlade och delade i reklamsyfte.
    - *Innehållsdeklaration (IARC):* svara på frågeformuläret. Appen har inget våld, ingen
      sexualitet, inga droger, inget spel om pengar, inga användargenererade texter och ingen
      fri webbläsning – svaren landar på lägsta nivån.

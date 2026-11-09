@@ -27,9 +27,24 @@ function openDb(): Promise<IDBDatabase | null> {
           request.result.createObjectStore(STORE_NAME);
         }
       };
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => resolve(null);
-      request.onblocked = () => resolve(null);
+      request.onsuccess = () => {
+        const db = request.result;
+        // Annan version vill uppgradera: släpp anslutningen och öppna om vid nästa anrop.
+        db.onversionchange = () => {
+          db.close();
+          dbPromise = null;
+        };
+        resolve(db);
+      };
+      // Nollställ så nästa anrop får försöka igen i stället för att cacha felet för alltid.
+      request.onerror = () => {
+        dbPromise = null;
+        resolve(null);
+      };
+      request.onblocked = () => {
+        dbPromise = null;
+        resolve(null);
+      };
     } catch {
       resolve(null);
     }
@@ -83,12 +98,27 @@ export async function idbDel(key: string): Promise<void> {
   }
 }
 
-async function idbClearAll(): Promise<void> {
-  try {
-    await runRequest("readwrite", (store) => store.clear());
-  } catch {
-    // Cachen är valfri – en misslyckad rensning stör inte appen.
-  }
+// Rensar allt utom offline-kartrutor (prefix "tile:"), som ska överleva en formatbyte.
+async function idbClearExceptTiles(): Promise<void> {
+  const db = await openDb();
+  if (!db) return;
+  await new Promise<void>((resolve) => {
+    try {
+      const transaction = db.transaction(STORE_NAME, "readwrite");
+      transaction.oncomplete = () => resolve();
+      transaction.onabort = () => resolve();
+      transaction.onerror = () => resolve();
+      const cursorRequest = transaction.objectStore(STORE_NAME).openCursor();
+      cursorRequest.onsuccess = () => {
+        const cursor = cursorRequest.result;
+        if (!cursor) return;
+        if (!String(cursor.key).startsWith("tile:")) cursor.delete();
+        cursor.continue();
+      };
+    } catch {
+      resolve();
+    }
+  });
 }
 
 // Rensar lagret en gång när formatet ändrats. Anropas vid appstart.
@@ -96,7 +126,7 @@ export async function ensureIdbVersion(): Promise<void> {
   try {
     const stored = await idbGet<number>(META_KEY);
     if (stored === IDB_CACHE_VERSION) return;
-    await idbClearAll();
+    await idbClearExceptTiles();
     await idbSet(META_KEY, IDB_CACHE_VERSION);
   } catch {
     // Cachen är valfri – appen fungerar utan den.

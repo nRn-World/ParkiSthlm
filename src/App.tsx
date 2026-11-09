@@ -6,6 +6,7 @@ import type { Feature as GeoFeature, FeatureCollection as GeoFeatureCollection }
 import { ensureIdbVersion, idbDel, idbGet, idbSet } from "./idb-cache";
 import { trackEvent } from "./analytics";
 import { downloadTiles, nativeTileRequestTransform } from "./tile-cache";
+import { initAds } from "./ads";
 import {
   getCurrentLocation,
   initNativeShell,
@@ -24,6 +25,7 @@ import {
   boundsOf,
   circlePolygon,
   emptyFeatureCollection,
+  escapeHtml,
   makeMarkerElement,
   readMap3dEnabled,
   removeAllMarkers,
@@ -100,6 +102,7 @@ import {
   type TariffId,
 } from "./data";
 import { LOCALE, lang, setLang } from "./i18n";
+import { IntroVideo } from "./IntroVideo";
 
 type Category = "all" | "free" | "garage" | "street" | "disabled" | "ev" | "mc" | "resident" | TariffId;
 type NavigationStep = { instruction: string; distance: number; location: LatLng };
@@ -191,12 +194,13 @@ const EV_RESULT_SORTS: { value: ResultSort; label: string }[] = [
 ];
 const REMINDER_LEAD_OPTIONS: ReminderLeadMinutes[] = [15, 30];
 // Sparade bilar från äldre versioner saknar vald framförhållning. Femton minuter
-// är samma beteende som tidigare och används därför som standard.  // Höjs när tolkningen av Trafikkontorets föreskrifter ändras – då måste gamla cachade
-  // poster läsas om i stället för att ligga kvar utan nya fält.
-  const OFFICIAL_DATA_CACHE_VERSION = 6;
+// är samma beteende som tidigare och används därför som standard.
+// Höjs när tolkningen av Trafikkontorets föreskrifter ändras – då måste gamla cachade
+// poster läsas om i stället för att ligga kvar utan nya fält.
+const OFFICIAL_DATA_CACHE_VERSION = 6;
 const OFFLINE_MIN_ZOOM = 10;
 const OFFLINE_MAX_ZOOM = 16;
-// Tak för offline-nedladdningen: skyddar telefonens lagring och OpenStreetMaps tileservrar.
+// Tak för offline-nedladdningen: skyddar telefonens lagring och OpenStreetMap tileservrar.
 const MAX_OFFLINE_TILES = 2500;
 // Genomsnittlig OSM-tile är ca 25 kB.
 const OFFLINE_TILE_KB = 25;
@@ -889,7 +893,7 @@ function parkedCarIcon(distanceLabel?: string) {
     html: `<div class="parked-car-marker">
       <span class="parked-car-glow"></span>
       <span class="parked-car-pin">${PARKED_CAR_GLYPH}</span>
-      <b>MIN BIL${distanceLabel ? `<em>${distanceLabel}</em>` : ""}</b>
+      <b>MIN BIL${distanceLabel ? `<em>${escapeHtml(distanceLabel)}</em>` : ""}</b>
     </div>`,
   };
 }
@@ -1530,9 +1534,13 @@ async function fetchJsonWithBundledFallback(apiUrl: string, fileName: string, in
   }
 
   for (const bundledUrl of bundledDataUrls(fileName)) {
-    const bundledResponse = await fetch(bundledUrl);
-    if (bundledResponse.ok && (bundledResponse.headers.get("content-type") ?? "").includes("json")) {
-      return bundledResponse.json();
+    try {
+      const bundledResponse = await fetch(bundledUrl);
+      if (bundledResponse.ok && (bundledResponse.headers.get("content-type") ?? "").includes("json")) {
+        return bundledResponse.json();
+      }
+    } catch {
+      // Nätfel på den här adressen – prova nästa.
     }
   }
 
@@ -1843,6 +1851,7 @@ function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [noticeAction, setNoticeAction] = useState<NoticeAction | null>(null);
   const noticeTimerRef = useRef<number | null>(null);
+  const offlineDownloadRef = useRef(false);
   const [canInstall, setCanInstall] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [pwaInstallOpen, setPwaInstallOpen] = useState(false);
@@ -1984,6 +1993,7 @@ function App() {
   // Skalet runt webbvyn i den inbyggda appen: startbilden tas bort när appen är redo.
   useEffect(() => {
     void initNativeShell();
+    void initAds();
   }, []);
 
   // Skapa virtuell parkeringsplats för klickad koordinat för rutt/navigering
@@ -2420,6 +2430,7 @@ function App() {
       setSelectedParking(place);
     });
 
+    let reverseController: AbortController | null = null;
     map.on("click", (event) => {
       const pos: LatLng = toLatLng(event.lngLat);
       
@@ -2431,21 +2442,27 @@ function App() {
       
       if (window.navigator.onLine) {
         setClickedLoading(true);
-        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos[0]}&lon=${pos[1]}&format=jsonv2&zoom=18&accept-language=${lang}`)
+        // Ett nytt klick avbryter det förra anropet så att ett gammalt svar inte skriver över.
+        reverseController?.abort();
+        const controller = new AbortController();
+        reverseController = controller;
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos[0]}&lon=${pos[1]}&format=jsonv2&zoom=18&accept-language=${lang}`, { signal: controller.signal })
           .then((res) => {
             if (!res.ok) throw new Error("reverse-geocoding-failed");
             return res.json();
           })
           .then((data) => {
+            if (controller.signal.aborted) return;
             const address = data.address;
             const road = address.road || address.pedestrian || address.suburb || address.village || data.display_name.split(",")[0];
             setClickedAddress(road || "Klickad position");
           })
-          .catch(() => {
+          .catch((error) => {
+            if (error?.name === "AbortError") return;
             setClickedAddress("Klickad position");
           })
           .finally(() => {
-            setClickedLoading(false);
+            if (reverseController === controller) setClickedLoading(false);
           });
       } else {
         setClickedAddress("Klickad position (offline)");
@@ -3360,7 +3377,7 @@ function App() {
   };
 
   const startOfflineDownload = async () => {
-    if (offlineProgress) return;  // Already downloading
+    if (offlineProgress || offlineDownloadRef.current) return;  // Already downloading
     setOfflineDialogOpen(false);
     const urls = offlineTiles;
     if (!urls.length) { showNotice("Kunde inte beräkna kartrutor."); return; }
@@ -3368,11 +3385,13 @@ function App() {
       showNotice(`Området är för stort för offline-nedladdning. Zooma in och försök igen (max ${MAX_OFFLINE_TILES} rutor).`);
       return;
     }
+    offlineDownloadRef.current = true;
     setOfflineProgress({ cached: 0, total: urls.length });
     const finishOffline = () => {
       localStorage.setItem("parksthlm-offline-ready", "true");
       setOfflineReady(true);
       setOfflineProgress(null);
+      offlineDownloadRef.current = false;
       showNotice("Offline-läge klart!");
     };
 
@@ -3386,17 +3405,20 @@ function App() {
       } catch {
         setOfflineProgress(null);
         showNotice("Misslyckades att starta nedladdning.");
+      } finally {
+        offlineDownloadRef.current = false;
       }
       return;
     }
 
+    let handler: ((e: MessageEvent) => void) | undefined;
     try {
       const registration = await navigator.serviceWorker!.ready;
-      const handler = (e: MessageEvent) => {
+      handler = (e: MessageEvent) => {
         if (e.data?.type === "OFFLINE_PROGRESS") {
           setOfflineProgress({ cached: e.data.cached, total: e.data.total });
           if (e.data.cached >= e.data.total) {
-            navigator.serviceWorker.removeEventListener("message", handler);
+            if (handler) navigator.serviceWorker.removeEventListener("message", handler);
             finishOffline();
           }
         }
@@ -3404,6 +3426,9 @@ function App() {
       navigator.serviceWorker.addEventListener("message", handler);
       registration.active?.postMessage({ type: "PREPARE_OFFLINE", urls });
     } catch {
+      // Lyssnaren ska bort även när starten misslyckas, annars ligger den kvar.
+      if (handler) navigator.serviceWorker.removeEventListener("message", handler);
+      offlineDownloadRef.current = false;
       setOfflineProgress(null);
       showNotice("Misslyckades att starta nedladdning.");
     }
@@ -3842,6 +3867,7 @@ function App() {
 
   return (
     <main className={`app-shell ${online ? "is-online" : "is-offline"}`}>
+      <IntroVideo />
       <div ref={mapNodeRef} className="map-canvas" aria-label="Karta över parkeringsplatser och taxeområden i Stockholm" />
 
       <section className={`map-panel ${panelOpen ? "panel-open" : ""} ${searchFocused ? "search-active" : ""}`} aria-label="Parkeringssökning">

@@ -13,8 +13,8 @@ function detectLang(): Lang {
   } catch {
     // localStorage kan saknas i privata fönster.
   }
-  const preferred = typeof navigator !== "undefined" && navigator.languages?.length ? navigator.languages : [navigator.language];
-  return preferred.some((value) => /^sv\b/i.test(value ?? "")) ? "sv" : "en";
+  // Engelska är standard; svenska väljs i appen.
+  return "en";
 }
 
 export const lang: Lang = detectLang();

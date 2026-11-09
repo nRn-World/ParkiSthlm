@@ -19,7 +19,7 @@ export function writeMap3dEnabled(enabled: boolean) {
   localStorage.setItem(MAP_3D_STORAGE_KEY, enabled ? "true" : "false");
 }
 
-// Ren rasterstil mot OpenStreetMaps servrar – samma rutor som Leaflet använde,
+// Ren rasterstil mot OpenStreetMap-servrar – samma rutor som Leaflet använde,
 // så den befintliga offline-cachen i service workern fortsätter att gälla.
 // Raster only = inga glyphs/sprites behövs.
 export const OSM_RASTER_STYLE: StyleSpecification = {
@@ -120,6 +120,11 @@ export function syncMarkers(
 export function removeAllMarkers(store: Map<string, Marker>) {
   for (const marker of store.values()) marker.remove();
   store.clear();
+}
+
+// För dynamiska värden som ska in i en HTML-mall (t.ex. markörtexter).
+export function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
 }
 
 export function makeMarkerElement(className: string, html: string) {

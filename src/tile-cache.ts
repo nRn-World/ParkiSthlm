@@ -48,7 +48,10 @@ const blobUrls = new Map<string, { url: string; at: number }>();
 
 function blobUrlFor(key: string, blob: Blob): string {
   const existing = blobUrls.get(key);
-  if (existing) return existing.url;
+  if (existing) {
+    existing.at = Date.now();
+    return existing.url;
+  }
 
   const url = URL.createObjectURL(blob);
   blobUrls.set(key, { url, at: Date.now() });
@@ -106,17 +109,19 @@ export async function downloadTiles(
   let cached = 0;
 
   for (let index = 0; index < total; index += 10) {
-    await Promise.all(urls.slice(index, index + 10).map(async (url) => {
+    const results = await Promise.all(urls.slice(index, index + 10).map(async (url) => {
       try {
-        if (await readTile(url)) return;
+        if (await readTile(url)) return true;
         const response = await fetch(url);
-        if (!response.ok) return;
+        if (!response.ok) return false;
         await writeTile(url, await response.blob());
+        return true;
       } catch {
         // En ruta som inte går att hämta ska inte avbryta resten.
+        return false;
       }
     }));
-    cached = Math.min(index + 10, total);
+    cached += results.filter(Boolean).length;
     onProgress(cached, total);
   }
 

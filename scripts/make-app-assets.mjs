@@ -10,7 +10,8 @@
 //
 // Apple och Google har motsatta krav på alfakanalen, därav två varianter av ikonen.
 // Genomskinligheten tas bort genom att lägga ikonen på loggans marinblå bottenfärg.
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 
@@ -62,6 +63,27 @@ for (const size of WEB_SIZES) {
 const assetsDir = path.join(root, "assets");
 await mkdir(assetsDir, { recursive: true });
 await writeFile(path.join(assetsDir, "logo.png"), iconPng);
+
+// Android maskar den adaptiva ikonen (cirkel/rundad ruta) och bara de mittersta ~66 % är säkra.
+// Loggan fyller hela bilden, så förgrunden är en egen layout (assets/icon-foreground-design.png):
+// symbolen överst och ordet uppdelat på två rader ("Parki" / "Sthlm") så att texten syns på liten
+// ikon. Saknas den filen används hela loggan i 60 % storlek.
+const FOREGROUND_SIZE = 1024;
+const designedForeground = path.join(assetsDir, "icon-foreground-design.png");
+if (existsSync(designedForeground)) {
+  await copyFile(designedForeground, path.join(assetsDir, "icon-foreground.png"));
+} else {
+  const logoInSafeZone = await sharp(logo)
+    .resize(Math.round(FOREGROUND_SIZE * 0.6), Math.round(FOREGROUND_SIZE * 0.6), { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .toBuffer();
+  await sharp({ create: { width: FOREGROUND_SIZE, height: FOREGROUND_SIZE, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite([{ input: logoInSafeZone, gravity: "center" }])
+    .png({ compressionLevel: 9 })
+    .toFile(path.join(assetsDir, "icon-foreground.png"));
+}
+await sharp({ create: { width: FOREGROUND_SIZE, height: FOREGROUND_SIZE, channels: 3, background: BACKGROUND } })
+  .png({ compressionLevel: 9 })
+  .toFile(path.join(assetsDir, "icon-background.png"));
 
 console.log(`public/icon-1024.png klar (${meta.width}x${meta.height}, alfakanal: ${meta.hasAlpha ? "ja" : "nej"})`);
 console.log(`public/play-icon-512.png klar (${playIconMeta.width}x${playIconMeta.height}, alfakanal: ja)`);

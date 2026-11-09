@@ -51,7 +51,7 @@ BRA ATT VETA
 · Uppgifterna kommer från Stockholms stad, OpenStreetMap, Open Charge Map, Stockholm Parkering och Nobil
 · Vägmärken, skyltning och betalningsapp på plats gäller alltid före kartan
 
-ParkiSthlm är byggd för att vara snabb att öppna när du står vid bilen: ingen registrering, ingen reklam och inga köp inuti appen.
+ParkiSthlm är byggd för att vara snabb att öppna när du står vid bilen: ingen registrering och inga köp inuti appen. Android-appen innehåller annonser.
 ```
 
 ## Vad är nytt (release notes, valfritt)
@@ -70,13 +70,13 @@ Första versionen: karta över Stockholms taxeområden, garage och laddplatser, 
 | Kan användaren begära att uppgifterna raderas? | Ja – allt ligger i telefonen och försvinner när appen avinstalleras eller appdata rensas |
 | Namn, e-post, telefon, kontakter, ekonomi, hälsa, meddelanden, foton, filer | Inte insamlade |
 | Appaktivitet, sökhistorik, enhets-ID, kraschloggar, diagnostik | Inte insamlade |
-| Reklam eller spårning | Nej |
+| Reklam | Ja – Google AdMob (annons-ID, enhetsuppgifter och appinteraktioner delas för reklam) |
 
 Skälet till att position deklareras som **delad**: när du startar en rutt skickas start- och
 målpunkt till den publika routingtjänsten OSRM för att vägen ska kunna ritas, och adressökning
 går till OpenStreetMap. Uppgifterna används bara för att svara på din förfrågan och sparas
 inte av oss eller i appen. Positionshistorik skickas aldrig, och appen innehåller ingen
-analys, ingen reklam och inga spårningsverktyg.
+analys och inga egna spårningsverktyg. Reklam visas via Google AdMob.
 
 ## Innehållsdeklarationen (IARC)
 
@@ -88,7 +88,7 @@ analys, ingen reklam och inga spårningsverktyg.
 | Delar användaren sin position med andra användare? | Nej |
 | Köp i appen | Nej |
 | Fri webbläsning | Nej – appen visar länkar till enskilda externa sidor, inte en öppen webbläsare |
-| Reklam | Nej |
+| Reklam | Ja |
 
 Svaren ger lägsta åldersnivå. Ange samma sak under **Målgrupp**: appen riktar sig till vuxna
 och är inte gjord för barn, så du slipper Families Policy.

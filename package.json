@@ -2,7 +2,7 @@
   "name": "parkisthlm",
   "description": "Interaktiv karta över parkering, taxeområden och avgifter i Stockholm.",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "engines": {
     "node": ">=18"
@@ -22,6 +22,7 @@
     "refresh:data": "node scripts/refresh-parking-data.mjs"
   },
   "dependencies": {
+    "@capacitor-community/admob": "^8.2.1",
     "@capacitor/android": "^8.5.3",
     "@capacitor/app": "^8.1.2",
     "@capacitor/browser": "^8.0.5",

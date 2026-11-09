@@ -4345,3 +4345,44 @@ a:focus-visible {
 .lang-toggle { gap: 5px; display: inline-flex; align-items: center; }
 .lang-flag { display: inline-flex; overflow: hidden; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15); }
 .lang-flag svg { display: block; }
+
+/* Introduktionsvideo första gången appen öppnas. */
+.intro-video {
+  position: fixed;
+  z-index: 5000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #040c1f;
+}
+
+.intro-video-player {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.intro-video-actions {
+  position: absolute;
+  right: 16px;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  left: 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.intro-video-actions button {
+  height: 42px;
+  padding: 0 18px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(4, 12, 31, 0.62);
+  backdrop-filter: blur(10px);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.intro-video-skip { margin-left: auto; }

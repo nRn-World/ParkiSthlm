@@ -20,8 +20,8 @@ def hasReleaseSigning = [releaseStoreFile, releaseStorePassword, releaseKeyAlias
 
 // Versionsnumret kan sättas av molnbygget; standardvärdet är det som ligger i repot.
 // Google Play kräver ett högre versionCode för varje uppladdning.
-def buildVersionCode = (System.getenv("PARKERA_VERSION_CODE") ?: "1") as Integer
-def buildVersionName = System.getenv("PARKERA_VERSION_NAME") ?: "1.0"
+def buildVersionCode = (System.getenv("PARKERA_VERSION_CODE") ?: "21") as Integer
+def buildVersionName = System.getenv("PARKERA_VERSION_NAME") ?: "1.0.2"
 
 android {
     namespace = "one.nrnworld.parkisthlm"
