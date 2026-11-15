@@ -98,6 +98,7 @@ const PATTERNS: Pattern[] = [
   [/^Varnar (\d+) min innan avgiften ändras eller servicetiden börjar\. Appen måste vara öppen för systemnotisen\.$/, (m) => `Warns ${m[1]} min before the fee changes or the service time starts. The app must be open for the system notification.`],
   [/^Servicetid (.+): (.+)\. Flytta bilen i tid\.$/, (m) => `Service time ${m[1]}: ${m[2]}. Move the car in time.`],
   [/^Bilens plats sparades · (.+)$/, (m) => `Car location saved · ${sub(m[1])}`],
+  [/^Servicetid (måndag|tisdag|onsdag|torsdag|fredag|lördag|söndag) (.+)$/, (m) => `Service time ${({ måndag: "Monday", tisdag: "Tuesday", onsdag: "Wednesday", torsdag: "Thursday", fredag: "Friday", lördag: "Saturday", söndag: "Sunday" } as Record<string, string>)[m[1]]} ${m[2]}`],
   [/^(.+) · Servicetid (.+)$/, (m) => `${sub(m[1])} · Service time ${m[2]}`],
   [/^Nästa tolkade tillfälle: (.+)\. Gäller den markerade gatusträckan\.$/, (m) => `Next interpreted occasion: ${m[1]}. Applies to the marked street section.`],
   [/^(.+) sparad(?: · (.+))? – relevant filter är aktivt$/, (m) => `${m[1]} saved${m[2] ? ` · ${m[2]}` : ""} – the relevant filter is active`],

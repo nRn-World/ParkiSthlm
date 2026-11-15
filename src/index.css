@@ -4386,3 +4386,39 @@ a:focus-visible {
 }
 
 .intro-video-skip { margin-left: auto; }
+
+/* Val av navigeringsapp (Google Maps / Waze) */
+.nav-picker-backdrop { z-index: 1400; place-items: end center; padding: 0; }
+.nav-picker {
+  width: min(480px, 100%);
+  padding: 22px 20px calc(20px + env(safe-area-inset-bottom));
+  border-radius: 24px 24px 0 0;
+  background: #fff;
+  color: #14232c;
+  box-shadow: 0 -20px 60px rgba(16, 30, 39, 0.3);
+}
+.nav-picker small { color: #78868e; font-weight: 700; }
+.nav-picker h2 { margin: 2px 0 2px; font-size: 1.25rem; }
+.nav-picker p { margin: 0 0 16px; color: #5b6a73; }
+.nav-picker-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.nav-picker-options button {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 18px 8px 16px; border: 1.5px solid #dbe4e8; border-radius: 16px;
+  font: inherit; font-weight: 800; color: #14232c; background: #fff; cursor: pointer;
+}
+.nav-picker-options button:active { background: #f0f5f8; }
+.nav-logo { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 14px; background: #fff; box-shadow: 0 2px 10px rgba(16, 30, 39, 0.16); }
+.nav-logo svg { width: 38px; height: 38px; }
+.nav-logo-full { overflow: hidden; }
+.nav-logo-full img { display: block; width: 100%; height: 100%; }
+.nav-picker-cancel {
+  width: 100%; margin-top: 12px; padding: 12px; border: 0; border-radius: 14px;
+  font: inherit; font-weight: 700; color: #5b6a73; background: #f0f3f3; cursor: pointer;
+}
+.dark .nav-picker { background: #17242c; color: #eef4f6; }
+.dark .nav-picker p, .dark .nav-picker small { color: #9db0ba; }
+.dark .nav-picker-options button { background: #1d2c35; border-color: #2c404b; color: #eef4f6; }
+.dark .nav-picker-cancel { background: #22333c; color: #cfdde3; }
+.nav-picker-options.has-apple { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.nav-picker-options.has-apple button { padding: 14px 4px 12px; font-size: 0.82rem; }
+.nav-logo-full svg { width: 100%; height: 100%; }

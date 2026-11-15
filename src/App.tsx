@@ -5,13 +5,14 @@ import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import type { Feature as GeoFeature, FeatureCollection as GeoFeatureCollection } from "geojson";
 import { ensureIdbVersion, idbDel, idbGet, idbSet } from "./idb-cache";
 import { trackEvent } from "./analytics";
+import wazeLogo from "./assets/waze-logo.webp";
 import { downloadTiles, nativeTileRequestTransform } from "./tile-cache";
-import { initAds } from "./ads";
 import {
   getCurrentLocation,
   initNativeShell,
   isNativeApp,
   openExternalUrl as openNativeUrl,
+  openNavigation,
   registerAndroidBackButton,
   requestNotificationPermission,
   setNativeStatusBar,
@@ -900,6 +901,39 @@ function parkedCarIcon(distanceLabel?: string) {
 
 function formatRouteDistance(meters: number) {
   return meters < 1000 ? `${Math.max(10, Math.round(meters / 10) * 10)} m` : `${(meters / 1000).toFixed(1).replace(".", ",")} km`;
+}
+
+// Märkesloggor (Google Maps / Waze) så att man känner igen apparna i valet. Banor från Simple Icons (CC0).
+function GoogleMapsLogo() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="#FBBC04" d="M19.527 4.799c1.212 2.608.937 5.678-.405 8.173-1.101 2.047-2.744 3.74-4.098 5.614-.619.858-1.244 1.75-1.669 2.727-.141.325-.263.658-.383.992-.121.333-.224.673-.34 1.008-.109.314-.236.684-.627.687h-.007c-.466-.001-.579-.53-.695-.887-.284-.874-.581-1.713-1.019-2.525-.51-.944-1.145-1.817-1.79-2.671L19.527 4.799z" />
+      <path fill="#34A853" d="M8.545 7.705l-3.959 4.707c.724 1.54 1.821 2.863 2.871 4.18.247.31.494.622.737.936l4.984-5.925-.029.01c-1.741.601-3.691-.291-4.392-1.987a3.377 3.377 0 0 1-.209-.716c-.063-.437-.077-.761-.004-1.198l.001-.007z" />
+      <path fill="#1A73E8" d="M5.492 3.149l-.003.004c-1.947 2.466-2.281 5.88-1.117 8.77l4.785-5.689-.058-.05-3.607-3.035z" />
+      <path fill="#EA4335" d="M14.661.436l-3.838 4.563a.295.295 0 0 1 .027-.01c1.6-.551 3.403.15 4.22 1.626.176.319.323.683.377 1.045.068.446.085.773.012 1.22l-.003.016 3.836-4.561A8.382 8.382 0 0 0 14.67.439l-.009-.003z" />
+      <path fill="#4285F4" d="M9.466 5.868L14.162.285l-.047-.012A8.31 8.31 0 0 0 11.986 0a8.439 8.439 0 0 0-6.169 2.766l-.016.018 3.665 3.084z" />
+    </svg>
+  );
+}
+
+function AppleMapsLogo() {
+  return (
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <defs><clipPath id="am-clip"><rect width="100" height="100" rx="22" /></clipPath></defs>
+      <g clipPath="url(#am-clip)">
+        <rect width="100" height="100" fill="#f2efe6" />
+        <path d="M0 0h58L0 62z" fill="#a8dd8f" />
+        <path d="M100 38v62H34z" fill="#7cc4f2" />
+        <path d="M-5 78L78-5l12 12L7 90z" fill="#fff" />
+        <path d="M18 100L100 18v10L28 100z" fill="#f7c948" />
+        <path d="M52 22l22 54-22-12-22 12z" fill="#1c8af7" stroke="#fff" strokeWidth="5" strokeLinejoin="round" />
+      </g>
+    </svg>
+  );
+}
+
+function WazeLogo() {
+  return <img src={wazeLogo} alt="" width={58} height={58} draggable={false} />;
 }
 
 function navigationInstruction(type?: string, modifier?: string, name?: string, exit?: number) {
@@ -1844,6 +1878,9 @@ function App() {
   const [infoOpen, setInfoOpen] = useState(false);
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
+  const [navTarget, setNavTarget] = useState<ParkingPlace | null>(null);
+  // Apple Maps erbjuds bara på iPhone/iPad i webbläsaren, inte i den inbyggda appen.
+  const showApple = isIosDevice() && !isNativeApp();
   const [offlineReady, setOfflineReady] = useState(localStorage.getItem("parksthlm-offline-ready") === "true");
   const [offlineDialogOpen, setOfflineDialogOpen] = useState(false);
   const [offlineTiles, setOfflineTiles] = useState<string[]>([]);
@@ -1993,7 +2030,6 @@ function App() {
   // Skalet runt webbvyn i den inbyggda appen: startbilden tas bort när appen är redo.
   useEffect(() => {
     void initNativeShell();
-    void initAds();
   }, []);
 
   // Skapa virtuell parkeringsplats för klickad koordinat för rutt/navigering
@@ -2520,7 +2556,7 @@ function App() {
   const setMap3d = (enabled: boolean) => {
     setMap3dEnabled(enabled);
     writeMap3dEnabled(enabled);
-    showNotice(enabled ? "3D-karta på – körläget lutas som Google Maps" : "2D-karta på – platt karta norr-upp");
+    showNotice(enabled ? "3D-karta på – luta och vrid med två fingrar" : "2D-karta på – platt karta norr-upp");
   };
 
   // Hantera klickad markör på kartan reaktivt
@@ -2635,7 +2671,7 @@ function App() {
     const start = new Date(calcStartInput);
     const end = new Date(calcEndInput);
     if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) {
-      return { calculation: null as TariffFeeCalculation | null, error: "Välj både start och sluttid." };
+      return { calculation: null as TariffFeeCalculation | null, error: "Välj både start- och sluttid." };
     }
     if (end.getTime() <= start.getTime()) {
       return { calculation: null as TariffFeeCalculation | null, error: "Sluttiden måste vara efter starttiden." };
@@ -3256,24 +3292,8 @@ function App() {
     setRouteInfo(null);
   };
 
-  const buildRoute = (destination: ParkingPlace) => {
-    if (userPosition) {
-      void calculateRoute(destination, userPosition, true);
-      return;
-    }
-    setRouteLoading(true);
-    void getCurrentLocation().then(
-      (position) => {
-        const start: LatLng = [position.lat, position.lng];
-        updateUserLocation(start, position.accuracy);
-        void calculateRoute(destination, start, true);
-      },
-      () => {
-        showNotice("GPS nekades. Rutten startar från kartans mitt.");
-        void calculateRoute(destination, viewCenter, false);
-      },
-    );
-  };
+  // All vägvisning sköts av Google Maps/Waze: knappen öppnar bara valet.
+  const buildRoute = (destination: ParkingPlace) => setNavTarget(destination);
 
   useEffect(() => {
     if (!routeInfo?.tracking || routeInfo.arrived) return;
@@ -3404,7 +3424,7 @@ function App() {
         finishOffline();
       } catch {
         setOfflineProgress(null);
-        showNotice("Misslyckades att starta nedladdning.");
+        showNotice("Kunde inte starta nedladdningen.");
       } finally {
         offlineDownloadRef.current = false;
       }
@@ -3430,7 +3450,7 @@ function App() {
       if (handler) navigator.serviceWorker.removeEventListener("message", handler);
       offlineDownloadRef.current = false;
       setOfflineProgress(null);
-      showNotice("Misslyckades att starta nedladdning.");
+      showNotice("Kunde inte starta nedladdningen.");
     }
   };
 
@@ -3759,6 +3779,7 @@ function App() {
   // förväntar sig – samma sak som att trycka på stäng-knappen. Returnerar true om något
   // faktiskt stängdes, vilket Android-knappen Tillbaka behöver veta.
   const closeTopLayer = useCallback(() => {
+    if (navTarget) { setNavTarget(null); return true; }
     if (offlineDialogOpen) { setOfflineDialogOpen(false); return true; }
     if (pwaInstallOpen) { dismissPwaInstall(); return true; }
     if (vehicleProfileOpen) { setVehicleProfileOpen(false); return true; }
@@ -3776,6 +3797,7 @@ function App() {
     dismissPwaInstall,
     favoritesOpen,
     infoOpen,
+    navTarget,
     offlineDialogOpen,
     parkedCarOpen,
     pwaInstallOpen,
@@ -4410,19 +4432,6 @@ function App() {
               <button type="button" className="primary-action" onClick={() => void buildRoute(selectedParking)} disabled={routeLoading}>
                 {routeLoading ? <RefreshCw className="spin" size={18} /> : <Navigation size={18} />} Navigera hit
               </button>
-              {selectedNavigation ? (
-                <>
-                  <button type="button" onClick={() => openExternalUrl(selectedNavigation.google)}>
-                    <ExternalLink size={17} /> Google
-                  </button>
-                  <button type="button" onClick={() => openExternalUrl(selectedNavigation.apple)}>
-                    <MapPin size={17} /> Apple
-                  </button>
-                  <button type="button" onClick={() => openExternalUrl(selectedNavigation.waze)}>
-                    <CarFront size={17} /> Waze
-                  </button>
-                </>
-              ) : null}
             </div>
             <div className="place-utility-actions">
               <button type="button" className={isFavorite(selectedParking) ? "is-favorite" : ""} onClick={() => toggleFavorite(selectedParking)}>
@@ -4509,21 +4518,34 @@ function App() {
               <button type="button" className="primary-action" onClick={() => void buildRoute(clickedPlace)} disabled={routeLoading}>
                 {routeLoading ? <RefreshCw className="spin" size={18} /> : <Navigation size={18} />} Navigera hit
               </button>
-              {clickedNavigation ? (
-                <>
-                  <button type="button" onClick={() => openExternalUrl(clickedNavigation.google)}>
-                    <ExternalLink size={17} /> Google
-                  </button>
-                  <button type="button" onClick={() => openExternalUrl(clickedNavigation.apple)}>
-                    <MapPin size={17} /> Apple
-                  </button>
-                  <button type="button" onClick={() => openExternalUrl(clickedNavigation.waze)}>
-                    <CarFront size={17} /> Waze
-                  </button>
-                </>
-              ) : null}
             </div>
           </motion.aside>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {navTarget && (
+          <motion.div className="modal-backdrop nav-picker-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }} onClick={() => setNavTarget(null)}>
+            <motion.section className="nav-picker" role="dialog" aria-modal="true" aria-label="Välj navigeringsapp" initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }} transition={{ duration: 0.18, ease: "easeOut" }} onClick={(event) => event.stopPropagation()}>
+              <small>Kör till</small>
+              <h2>{placeListCopy(navTarget).heading}</h2>
+              <p>{placeListCopy(navTarget).detail}</p>
+              <div className={`nav-picker-options${showApple ? " has-apple" : ""}`}>
+                {showApple ? (
+                  <button type="button" className="nav-apple" onClick={() => { void openNavigation("apple", navTarget.lat, navTarget.lng); setNavTarget(null); }}>
+                    <span className="nav-logo nav-logo-full"><AppleMapsLogo /></span> Apple Maps
+                  </button>
+                ) : null}
+                <button type="button" className="nav-google" onClick={() => { void openNavigation("google", navTarget.lat, navTarget.lng); setNavTarget(null); }}>
+                  <span className="nav-logo"><GoogleMapsLogo /></span> Google Maps
+                </button>
+                <button type="button" className="nav-waze" onClick={() => { void openNavigation("waze", navTarget.lat, navTarget.lng); setNavTarget(null); }}>
+                  <span className="nav-logo nav-logo-full"><WazeLogo /></span> Waze
+                </button>
+              </div>
+              <button type="button" className="nav-picker-cancel" onClick={() => setNavTarget(null)}>Avbryt</button>
+            </motion.section>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -4704,11 +4726,11 @@ function App() {
                 })}
               </div>
               <h3 className="map-view-heading">Kartläge</h3>
-              <p className="map-view-text">3D lutar kartan i körläge som Google Maps och Waze. 2D håller den alltid platt.</p>
+              <p className="map-view-text">3D låter dig luta och vrida kartan med två fingrar. 2D håller den alltid platt.</p>
               <div className="vehicle-profile-grid map-view-grid">
                 <button type="button" className={map3dEnabled ? "active" : ""} onClick={() => setMap3d(true)}>
                   <span><BoxIcon size={20} /></span>
-                  <strong>3D</strong><small>Lutad vy i körläge</small>
+                  <strong>3D</strong><small>Luta och vrid kartan</small>
                 </button>
                 <button type="button" className={!map3dEnabled ? "active" : ""} onClick={() => setMap3d(false)}>
                   <span><MapIcon size={20} /></span>
@@ -4783,7 +4805,7 @@ function App() {
                   { icon: <CreditCard size={18} />, title: "Betalning", text: "Länkar till EasyPark, Parkster och Stockholm Parkering – zonkoden på skylten avgör." },
                   { icon: <Gauge size={18} />, title: "Beläggning", text: "Inget öppet flöde för lediga platser finns. Garage visar kapacitet, inte beläggning." },
                   { icon: <Bell size={18} />, title: "Påminnelser", text: "Skapas lokalt i telefonen och kräver att appen har varit öppen." },
-                  { icon: <WifiOff size={18} />, title: "Offline", text: "Karta, taxor och GPS fungerar utan nät. Ny sökning och rutt kräver internet." },
+                  { icon: <WifiOff size={18} />, title: "Offline", text: "Karta, taxor och GPS fungerar utan nät. Ny sökning kräver internet. Vägvisning sker i Google Maps eller Waze." },
                   { icon: <ShieldCheck size={18} />, title: "Integritet", text: "Anonym statistik på webben, inga cookies. Appen skickar ingen statistik alls." },
                 ].map((item) => (
                   <div className="about-card" key={item.title}>
@@ -4811,7 +4833,7 @@ function App() {
             <button className="sheet-close" type="button" onClick={() => setOfflineDialogOpen(false)} aria-label="Stäng"><X size={19} /></button>
             <span className="info-icon"><Download size={24} /></span>
             <h2 id="offline-dialog-title">Ladda ner offline-karta?</h2>
-            <p>Kartrutor för det aktuella området (zoom {OFFLINE_MIN_ZOOM}–{OFFLINE_MAX_ZOOM}) laddas ner och sparas i telefonen. Efter nedladdning fungerar kartan, GPS:en och parkeringsdatan utan internet (även i flygplansläge).<br /><br /><strong>{offlineTiles.length} kartrutor</strong> · <strong>ca {offlineTileSizeLabel(offlineTiles.length)}</strong><br /><strong>Adressökning och vägrutt</strong> kräver fortfarande internet.</p>
+            <p>Kartrutor för det aktuella området (zoom {OFFLINE_MIN_ZOOM}–{OFFLINE_MAX_ZOOM}) laddas ner och sparas i telefonen. Efter nedladdning fungerar kartan, GPS:en och parkeringsdatan utan internet (även i flygplansläge).<br /><br /><strong>{offlineTiles.length} kartrutor</strong> · <strong>ca {offlineTileSizeLabel(offlineTiles.length)}</strong><br /><strong>Adressökning och vägvisning</strong> kräver fortfarande internet.</p>
             {offlineTiles.length > MAX_OFFLINE_TILES ? (
               <div className="warning-box"><CircleAlert size={18} /><span><strong>Området är för stort.</strong> Zooma in kartan och öppna rutan igen – max {MAX_OFFLINE_TILES} rutor per nedladdning.</span></div>
             ) : null}

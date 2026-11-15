@@ -20,12 +20,6 @@
             </intent-filter>
         </activity>
 
-        <!-- AdMob app-ID. Appens riktiga AdMob app-ID (ParkiSthlm, Android). -->
-        <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-2518752253653498~3787493266"
-        />
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -38,9 +32,6 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
-
-    <!-- AdMob använder annons-ID; Play-deklarationen säger att appen gör det, så behörigheten måste finnas (Android 13+). -->
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
     <!-- Positionen frågas bara om när du själv trycker på plats- eller ruttknappen, och
          används för att visa dig på kartan och räkna ut vägen. Den exakta behörigheten
@@ -55,6 +46,8 @@
     <!-- Notispluginen deklarerar SCHEDULE_EXACT_ALARM, men Google Play kräver en särskild deklaration för den.
          Påminnelserna klarar sig med ungefärlig tid (några minuters marginal), så den tas bort. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />
+    <!-- Appen har ingen reklam och inga annons-ID: behörigheten får aldrig följa med från ett bibliotek. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
 
     <!-- Kartan har nytta av GPS men appen ska gå att installera även utan den. -->
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />

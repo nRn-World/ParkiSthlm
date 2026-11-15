@@ -210,6 +210,39 @@ export async function openExternalUrl(url: string): Promise<void> {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
+export type NavApp = "google" | "waze" | "apple";
+
+/**
+ * Startar vägvisning i Google Maps eller Waze med målet redan ifyllt.
+ * På Android öppnas appen direkt via sitt eget schema; är den inte installerad
+ * (eller på iOS/webben) faller det tillbaka på https-länken.
+ */
+export async function openNavigation(app: NavApp, lat: number, lng: number): Promise<void> {
+  const ll = `${lat},${lng}`;
+  if (app === "apple") {
+    // Apple Maps (iPhone i webbläsaren): universell länk som öppnar Kartor med rutten klar.
+    window.location.href = `https://maps.apple.com/?daddr=${ll}&dirflg=d`;
+    return;
+  }
+  const web = app === "google"
+    ? `https://www.google.com/maps/dir/?api=1&destination=${ll}&travelmode=driving&dir_action=navigate`
+    : `https://waze.com/ul?ll=${ll}&navigate=yes`;
+  if (nativePlatform() !== "android") return openExternalUrl(web);
+  // Lämnar vi appen (paus/dold) startade Maps/Waze. Annars saknas appen och https-länken
+  // öppnas som en vanlig Android-länk (webbläsaren eller appens egen länkhantering).
+  let left = false;
+  const markLeft = () => { left = true; };
+  document.addEventListener("visibilitychange", markLeft, { once: true });
+  window.addEventListener("blur", markLeft, { once: true });
+  window.location.href = app === "google" ? `google.navigation:q=${ll}&mode=d` : `waze://?ll=${ll}&navigate=yes`;
+  // shortcut: en timer avgör om appen saknas; byt till App Launcher-plugin om det blir opålitligt.
+  window.setTimeout(() => {
+    document.removeEventListener("visibilitychange", markLeft);
+    window.removeEventListener("blur", markLeft);
+    if (!left && document.visibilityState === "visible") window.location.href = web;
+  }, 2000);
+}
+
 /**
  * Gör i ordning skalet runt webbvyn: statusradens stil och att startbilden tas bort.
  * Anropas en gång när appen startar; på webben händer ingenting.
