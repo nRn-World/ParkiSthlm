@@ -7,6 +7,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 [![Vite 7](https://img.shields.io/badge/Vite-7-646CFF?logo=vite)](https://vite.dev/)
 [![OpenStreetMap](https://img.shields.io/badge/Karta-OpenStreetMap-7EBC6F?logo=openstreetmap)](https://www.openstreetmap.org/)
+[![Google Play](https://img.shields.io/badge/Google%20Play-Ladda%20ner-414141?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=one.nrnworld.parkisthlm)
 
 ---
 
@@ -18,7 +19,7 @@
 2. **Vad kostar det?** – tryck på kartan och se taxan (Taxa 1–5) och priset *just nu*.
 3. **Hur kommer jag dit?** – appen visar vägen och hjälper dig komma ihåg var bilen står.
 
-Den fungerar som Android-app (Google Play) och i webbläsaren, och kartan går att ladda ner för användning offline. Priser och tider följer Stockholms stads officiella taxor, och parkeringsplatser hämtas från OpenStreetMap.
+Den fungerar som **[Android-app i Google Play](https://play.google.com/store/apps/details?id=one.nrnworld.parkisthlm)** och i webbläsaren, och kartan går att ladda ner för användning offline. Priser och tider följer Stockholms stads officiella taxor, och parkeringsplatser hämtas från OpenStreetMap.
 
 <p align="center">
   <img src="docs/screenshots/karta.jpg" width="23%" alt="Taxekarta över Stockholm" />
@@ -271,7 +272,7 @@ npm run ios:open      # öppnar projektet i Xcode (kräver macOS)
 
 ## 🤖 Android-app (Google Play)
 
-Samma app finns även som Android-app. Gradle-projektet ligger i `android/` och byggs med
+Samma app finns även som Android-app – **[ladda ner den i Google Play](https://play.google.com/store/apps/details?id=one.nrnworld.parkisthlm)**. Gradle-projektet ligger i `android/` och byggs med
 Capacitor 8 mot API 36, vilket är nivån Google Play kräver från och med 31 augusti 2026.
 
 ```bash
