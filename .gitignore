@@ -33,7 +33,9 @@ dist-ssr/
 .env.test.local
 .env.production.local
 
-# Byggda paket för uppladdning
+# Byggda paket för uppladdning (hör aldrig hemma i repot)
 release/
+*.aab
+*.apk
 testsprite_tests/tmp/
 testsprite_tests/tmp/config.json
