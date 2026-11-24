@@ -56,6 +56,25 @@ ParkiSthlm är byggd för att vara snabb att öppna när du står vid bilen: ing
 
 ## Vad är nytt (release notes, valfritt)
 
+Play Console har ett fält för **Vad är nytt** per språk (högst 500 tecken). Klistra in texten
+för den version du laddar upp.
+
+### 1.1.0
+
+Svenska (standard):
+
+```
+Större karta när du söker parkering: sökpanelen glider nu upp automatiskt när du panorerar kartan. Pilen under statusraden tar tillbaka panelen, och listknappen öppnar den också.
+```
+
+Engelska:
+
+```
+More room for the map: the search panel now slides away when you pan the map. Tap the arrow below the status bar – or the list button – to bring it back.
+```
+
+### 1.0.0
+
 ```
 Första versionen: karta över Stockholms taxeområden, garage och laddplatser, GPS-navigering med körläge, P-skiva med påminnelse, sparad bil och offline-karta.
 ```

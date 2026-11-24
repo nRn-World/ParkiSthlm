@@ -1874,6 +1874,9 @@ function App() {
   const [locating, setLocating] = useState(false);
   const [online, setOnline] = useState(navigator.onLine);
   const [panelOpen, setPanelOpen] = useState(false);
+  // Mobil: sökpanelen glider upp när man panorrerar kartan så att kartan får hela skärmen.
+  // Pilen som ligger kvar högst upp öppnar panelen igen.
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
@@ -2508,6 +2511,14 @@ function App() {
     map.on("moveend", () => {
       setViewCenter(toLatLng(map.getCenter()));
       setMapZoom(map.getZoom());
+    });
+
+    // Mobil: när man drar/panorerar kartan fälls sökpanelen upp så att kartan blir större.
+    // Programmatiska kameraändringar (flyTo/easeTo) saknar originalEvent och rör inte panelen.
+    map.on("movestart", (event) => {
+      if (!event.originalEvent) return;
+      if (!window.matchMedia("(max-width: 860px)").matches) return;
+      setPanelCollapsed(true);
     });
 
     // Körlägets zoom ("höjden") ska ligga kvar tills användaren ändrar den själv –
@@ -3892,7 +3903,7 @@ function App() {
       <IntroVideo />
       <div ref={mapNodeRef} className="map-canvas" aria-label="Karta över parkeringsplatser och taxeområden i Stockholm" />
 
-      <section className={`map-panel ${panelOpen ? "panel-open" : ""} ${searchFocused ? "search-active" : ""}`} aria-label="Parkeringssökning">
+      <section className={`map-panel ${panelOpen ? "panel-open" : ""} ${searchFocused ? "search-active" : ""} ${panelCollapsed ? "is-collapsed" : ""}`} aria-label="Parkeringssökning">
         <header className="brand-row">
           <button className="mobile-menu" type="button" onClick={() => setPanelOpen((open) => !open)} aria-label="Öppna meny">
             {panelOpen ? <X size={20} /> : <Menu size={20} />}
@@ -4223,8 +4234,21 @@ function App() {
         </div>
       </section>
 
+      {/* Pilen som tar tillbaka sökpanelen när den har glidit upp. Bara synlig på mobil. */}
+      <button
+        type="button"
+        className={`panel-reveal ${panelCollapsed ? "is-visible" : ""}`}
+        onClick={() => setPanelCollapsed(false)}
+        aria-label="Visa sökpanelen"
+        title="Visa sökpanelen"
+        tabIndex={panelCollapsed ? 0 : -1}
+      >
+        <ChevronDown size={17} />
+        <span>Sök parkering</span>
+      </button>
+
       <div className="map-top-actions" aria-label="Snabbåtgärder">
-        <button type="button" onClick={() => setPanelOpen((open) => !open)} className="list-button" aria-label={panelOpen ? "Dölj parkeringslistan" : "Visa parkeringslistan"} aria-pressed={panelOpen} title={panelOpen ? "Dölj lista" : "Visa parkeringar"} data-mobile-label="Lista">
+        <button type="button" onClick={() => { if (panelCollapsed) { setPanelCollapsed(false); setPanelOpen(true); return; } setPanelOpen((open) => !open); }} className="list-button" aria-label={panelOpen ? "Dölj parkeringslistan" : "Visa parkeringslistan"} aria-pressed={panelOpen} title={panelOpen ? "Dölj lista" : "Visa parkeringar"} data-mobile-label="Lista">
           <ListFilter size={18} /> <span>{panelOpen ? "Dölj lista" : "Visa parkeringar"}</span>
         </button>
         <button type="button" onClick={() => void loadCurrentMapView()} className="fetch-view-button" disabled={areaLoading || !online} aria-label={areaLoading ? "Hämtar parkeringar i aktuell kartvy" : "Hämta parkeringar i aktuell kartvy"} title="Hämta kartvy" data-mobile-label={areaLoading ? "Hämtar" : "Kartvy"}>

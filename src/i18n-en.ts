@@ -176,6 +176,8 @@ export const EN: Record<string, string> = {
   "Beräknas på taxans timpris i fem minuters steg. Betalningsappar kan avrunda uppåt och max tid kan vara kortare.": "Calculated on the tariff's hourly price in five-minute steps. Payment apps may round up and the max time may be shorter.",
   "Dölj parkeringslistan": "Hide parking list",
   "Visa parkeringslistan": "Show parking list",
+  "Sök parkering": "Search parking",
+  "Visa sökpanelen": "Show the search panel",
   "Snabbsökningar": "Quick searches",
   "Närmsta parkering utifrån GPS": "Nearest parking by GPS",
   "Avgiftsfri parkering (Gratis)": "Free parking",

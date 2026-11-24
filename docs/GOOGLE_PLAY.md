@@ -202,7 +202,8 @@ därför appbunten på en telefon innan du laddar upp.
 
 1. Höj `versionCode` (och vid behov `versionName`) i `android/app/build.gradle`.
 2. Bygg en ny appbunt och ladda upp den under *Produktion → Ny version*.
-3. Skriv vad som är nytt och rulla ut.
+3. Klistra in texten under **Vad är nytt** i [google-play-text.md](google-play-text.md) – det
+   finns en färdig text per version på svenska och engelska. Rulla sedan ut.
 
 Webbappen på GitHub Pages uppdateras av sitt eget arbetsflöde och påverkas inte.
 
